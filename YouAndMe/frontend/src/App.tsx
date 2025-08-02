@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import FileUpload from './components/FileUpload';
 import FileDownload from './components/FileDownload';
 import InviteCode from './components/InviteCode';
@@ -11,13 +11,50 @@ function App() {
     const [port, setPort] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<'upload' | 'download'>('upload');
 
+    const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+    // Cleanup when tab closes
+   useEffect(() => {
+     const backendUrl = import.meta.env.VITE_BACKEND_URL;
+
+     const handleTabClose = async () => {
+       if (port && backendUrl) {
+         const url = `${backendUrl}/api/cleanup/${port}`;
+
+         try {
+           // Use navigator.sendBeacon only if needed, else fall back to fetch
+           await fetch(url, {
+             method: 'POST',
+             keepalive: true,
+             headers: {
+               'Content-Type': 'application/json',
+             },
+             body: JSON.stringify({ tabClosed: true }),
+           });
+           console.log('Cleanup sent on tab close');
+         } catch (err) {
+           console.error('Cleanup failed on tab close', err);
+         }
+       }
+     };
+
+     window.addEventListener('beforeunload', handleTabClose);
+     return () => window.removeEventListener('beforeunload', handleTabClose);
+   }, [port]);
+
+
+
+
+
+
+
+
     const handleFileUpload = async (file: File) => {
         setUploadedFile(file);
         setIsUploading(true);
         setPort(null);
 
         try {
-            const backendUrl = import.meta.env.VITE_BACKEND_URL;
             const formData = new FormData();
             formData.append('file', file);
 
@@ -36,11 +73,23 @@ function App() {
         }
     };
 
+    const handleStopSharing = async () => {
+        if (!port) return;
+        try {
+            await axios.delete(`${backendUrl}/api/cleanup/${port}`);
+            setUploadedFile(null);
+            setPort(null);
+            alert('Sharing stopped and file deleted.');
+        } catch (error) {
+            console.error('Error stopping sharing:', error);
+            alert('Failed to stop sharing. Try again.');
+        }
+    };
+
     const handleDownload = async (portToDownload: number) => {
         setIsDownloading(true);
 
         try {
-            const backendUrl = import.meta.env.VITE_BACKEND_URL;
             const response = await axios.get(`${backendUrl}/api/download/${portToDownload}`, {
                 responseType: 'blob',
             });
@@ -86,22 +135,24 @@ function App() {
                 <div className="bg-white rounded-lg shadow-lg p-6 sm:p-8">
                     <div className="flex border-b mb-6">
                         <button
-                            className={`px-4 py-2 font-medium transition-colors ${activeTab === 'upload'
-                                ? 'text-red-600 border-b-2 border-red-600'
-                                : 'text-gray-500 hover:text-red-600'
-                                }`}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeTab === 'upload'
+                                    ? 'text-red-600 border-b-2 border-red-600'
+                                    : 'text-gray-500 hover:text-red-600'
+                            }`}
                             onClick={() => setActiveTab('upload')}
                         >
                             Share your file
                         </button>
                         <button
-                            className={`px-4 py-2 font-medium transition-colors ${activeTab === 'download'
-                                ? 'text-red-600 border-b-2 border-red-600'
-                                : 'text-gray-500 hover:text-red-600'
-                                }`}
+                            className={`px-4 py-2 font-medium transition-colors ${
+                                activeTab === 'download'
+                                    ? 'text-red-600 border-b-2 border-red-600'
+                                    : 'text-gray-500 hover:text-red-600'
+                            }`}
                             onClick={() => setActiveTab('download')}
                         >
-                           Receive your file
+                            Receive your file
                         </button>
                     </div>
 
@@ -125,6 +176,17 @@ function App() {
                             )}
 
                             <InviteCode port={port} />
+
+                            {port && (
+                                <div className="mt-4 text-center">
+                                    <button
+                                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                                        onClick={handleStopSharing}
+                                    >
+                                        Stop Sharing
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     ) : (
                         <div>
@@ -139,8 +201,6 @@ function App() {
                         </div>
                     )}
                 </div>
-
-
             </div>
         </main>
     );
