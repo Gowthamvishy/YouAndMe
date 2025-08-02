@@ -14,31 +14,34 @@ function App() {
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
     // Cleanup when tab closes
-  useEffect(() => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
+useEffect(() => {
+     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  const handleCleanup = () => {
-    if (port && backendUrl) {
-      const url = `${backendUrl}/api/cleanup/${port}`;
-      const blob = new Blob([], { type: 'application/json' });
-      navigator.sendBeacon(url, blob);
-    }
-  };
+     const handleTabClose = async () => {
+       if (port && backendUrl) {
+         const url = `${backendUrl}/api/cleanup/${port}`;
 
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === 'hidden') {
-      handleCleanup();
-    }
-  };
+         try {
+           // Use navigator.sendBeacon only if needed, else fall back to fetch
+           await fetch(url, {
+             method: 'POST',
+             keepalive: true,
+             headers: {
+               'Content-Type': 'application/json',
+             },
+             body: JSON.stringify({ tabClosed: true }),
+           });
+           console.log('Cleanup sent on tab close');
+         } catch (err) {
+           console.error('Cleanup failed on tab close', err);
+         }
+       }
+     };
 
-  window.addEventListener('visibilitychange', handleVisibilityChange);
-  window.addEventListener('pagehide', handleCleanup); // better for Safari
+     window.addEventListener('beforeunload', handleTabClose);
+     return () => window.removeEventListener('beforeunload', handleTabClose);
+   }, [port]);
 
-  return () => {
-    window.removeEventListener('visibilitychange', handleVisibilityChange);
-    window.removeEventListener('pagehide', handleCleanup);
-  };
-}, [port]);
 
 
     const handleFileUpload = async (file: File) => {
