@@ -15,27 +15,20 @@ function App() {
 
     // Cleanup when tab closes
 useEffect(() => {
-  const backendUrl = import.meta.env.VITE_BACKEND_URL;
-
-  const handleTabClose = async () => {
-    if (port && backendUrl) {
-      const url = `${backendUrl}/api/cleanup/${port}`;
-
-      try {
-        await fetch(url, {
-          method: 'DELETE', // <-- CHANGED from POST to DELETE
-          keepalive: true,
-        });
-        console.log('Cleanup sent on tab close');
-      } catch (err) {
-        console.error('Cleanup failed on tab close', err);
-      }
+  const handleVisibilityChange = () => {
+    if (document.visibilityState === 'hidden' && port) {
+      fetch(`${backendUrl}/api/cleanup/${port}`, {
+        method: 'DELETE',
+        keepalive: true,
+      }).catch(() => {});
     }
   };
 
-  window.addEventListener('beforeunload', handleTabClose);
-  return () => window.removeEventListener('beforeunload', handleTabClose);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+
+  return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
 }, [port]);
+
 
 
 
