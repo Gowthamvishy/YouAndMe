@@ -112,7 +112,7 @@ useEffect(() => {
         <main className="min-h-screen flex flex-col items-center justify-center p-4 bg-red-50">
             <div className="container mx-auto px-4 py-8 max-w-2xl">
                 <header className="text-center mb-12">
-                    <h1 className="text-4xl font-bold text-red-600 mb-2">YouAndMe</h1>
+                    <h1 className="text-4xl font-bold text-red-600 mb-2">YouShare</h1>
                     <p className="text-xl text-red-800">Secure Our Share</p>
                 </header>
 
