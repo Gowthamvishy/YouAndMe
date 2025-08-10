@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import FileUpload from './components/FileUpload';
 import FileDownload from './components/FileDownload';
 import InviteCode from './components/InviteCode';
