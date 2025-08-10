@@ -13,26 +13,6 @@ function App() {
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-    // Cleanup when tab closes
-useEffect(() => {
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === 'hidden' && port) {
-      fetch(`${backendUrl}/api/cleanup/${port}`, {
-        method: 'DELETE',
-        keepalive: true,
-      }).catch(() => {});
-    }
-  };
-
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-
-  return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-}, [port]);
-
-
-
-
-
     const handleFileUpload = async (file: File) => {
         setUploadedFile(file);
         setIsUploading(true);
