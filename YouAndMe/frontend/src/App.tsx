@@ -5,93 +5,56 @@ import InviteCode from './components/InviteCode';
 import axios from 'axios';
 
 function App() {
-    //const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
-    //const [port, setPort] = useState<number | null>(null);
-    const [uploadedFiles, setUploadedFiles] = useState<{ name: string; port: number }[]>([]);
+    const [port, setPort] = useState<number | null>(null);
+    //const [uploadedFiles, setUploadedFiles] = useState<{ name: string; port: number }[]>([]);
     const [activeTab, setActiveTab] = useState<'upload' | 'download'>('upload');
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-    // const handleFileUpload = async (file: File) => {
-    //     setUploadedFile(file);
-    //     setIsUploading(true);
-    //     setPort(null);
+    const handleFileUpload = async (file: File) => {
+        setUploadedFile(file);
+        setIsUploading(true);
+        setPort(null);
 
-    //     try {
-    //         const formData = new FormData();
-    //         formData.append('file', file);
-
-    //         const response = await axios.post(`${backendUrl}/api/upload`, formData, {
-    //             headers: {
-    //                 'Content-Type': 'multipart/form-data',
-    //             },
-    //         });
-
-    //         setPort(response.data.port);
-    //     } catch (error) {
-    //         console.error('Error uploading file:', error);
-    //         alert('Failed to upload file. Please ensure the backend is running and try again.');
-    //     } finally {
-    //         setIsUploading(false);
-    //     }
-    // };
-
-    const handleFileUpload = async (files: File[]) => {
-    setIsUploading(true);
-
-    try {
-        const uploaded = [];
-
-        for (const file of files) {
+        try {
             const formData = new FormData();
             formData.append('file', file);
 
             const response = await axios.post(`${backendUrl}/api/upload`, formData, {
-                headers: { 'Content-Type': 'multipart/form-data' },
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
             });
 
-            uploaded.push({ name: file.name, port: response.data.port });
+            setPort(response.data.port);
+        } catch (error) {
+            console.error('Error uploading file:', error);
+            alert('Failed to upload file. Please ensure the backend is running and try again.');
+        } finally {
+            setIsUploading(false);
         }
+    };
 
-        setUploadedFiles((prev) => [...prev, ...uploaded]);
-    } catch (error) {
-        console.error('Error uploading files:', error);
-        alert('Failed to upload files. Please ensure the backend is running and try again.');
-    } finally {
-        setIsUploading(false);
-    }
-};
+   
 
 
     
 
-    // const handleStopSharing = async () => {
-    //     if (!port) return;
-    //     try {
-    //         await axios.delete(`${backendUrl}/api/cleanup/${port}`);
-    //         setUploadedFile(null);
-    //         setPort(null);
-    //         alert('Sharing stopped and file deleted.');
-    //     } catch (error) {
-    //         console.error('Error stopping sharing:', error);
-    //         alert('Failed to stop sharing. Try again.');
-    //     }
-    // };
-
     const handleStopSharing = async () => {
-    if (!port) return;
-    try {
-        await axios.delete(`${backendUrl}/api/cleanup/${port}`);
-        setUploadedFile(null);
-        setPort(null);
-        alert('Sharing stopped and file deleted.');
-    } catch (error) {
-        ...
-    }
-};
-
+        if (!port) return;
+        try {
+            await axios.delete(`${backendUrl}/api/cleanup/${port}`);
+            setUploadedFile(null);
+            setPort(null);
+            alert('Sharing stopped and file deleted.');
+        } catch (error) {
+            console.error('Error stopping sharing:', error);
+            alert('Failed to stop sharing. Try again.');
+        }
+    };
 
     const handleDownload = async (portToDownload: number) => {
         setIsDownloading(true);
