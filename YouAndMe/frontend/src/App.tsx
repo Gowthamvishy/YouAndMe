@@ -1,55 +1,55 @@
 import { useState } from 'react';
 import FileUpload from './components/FileUpload';
 import FileDownload from './components/FileDownload';
-import InviteCode from './components/InviteCode';
 import axios from 'axios';
 
 function App() {
-    const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
     const [isDownloading, setIsDownloading] = useState(false);
-    const [port, setPort] = useState<number | null>(null);
+    const [uploadedFiles, setUploadedFiles] = useState<{ name: string; port: number }[]>([]);
     const [activeTab, setActiveTab] = useState<'upload' | 'download'>('upload');
 
     const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-    const handleFileUpload = async (file: File) => {
-        setUploadedFile(file);
+    // ✅ Handle multiple file uploads
+    const handleFileUpload = async (files: File[]) => {
         setIsUploading(true);
-        setPort(null);
 
         try {
-            const formData = new FormData();
-            formData.append('file', file);
+            const uploaded = [];
 
-            const response = await axios.post(`${backendUrl}/api/upload`, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
-            });
+            for (const file of files) {
+                const formData = new FormData();
+                formData.append('file', file);
 
-            setPort(response.data.port);
+                const response = await axios.post(`${backendUrl}/api/upload`, formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+
+                uploaded.push({ name: file.name, port: response.data.port });
+            }
+
+            setUploadedFiles((prev) => [...prev, ...uploaded]);
         } catch (error) {
-            console.error('Error uploading file:', error);
-            alert('Failed to upload file. Please ensure the backend is running and try again.');
+            console.error('Error uploading files:', error);
+            alert('Failed to upload files. Please ensure the backend is running and try again.');
         } finally {
             setIsUploading(false);
         }
     };
 
-    const handleStopSharing = async () => {
-        if (!port) return;
+    // ✅ Stop sharing a specific file
+    const handleStopSharing = async (port: number) => {
         try {
             await axios.delete(`${backendUrl}/api/cleanup/${port}`);
-            setUploadedFile(null);
-            setPort(null);
-            alert('Sharing stopped and file deleted.');
+            setUploadedFiles((prev) => prev.filter((f) => f.port !== port));
         } catch (error) {
             console.error('Error stopping sharing:', error);
             alert('Failed to stop sharing. Try again.');
         }
     };
 
+    // ✅ Download with original filename
     const handleDownload = async (portToDownload: number) => {
         setIsDownloading(true);
 
@@ -124,11 +124,25 @@ function App() {
                         <div>
                             <FileUpload onFileUpload={handleFileUpload} isUploading={isUploading} />
 
-                            {uploadedFile && !isUploading && (
-                                <div className="mt-4 p-3 bg-red-100 rounded-md">
-                                    <p className="text-sm text-red-700">
-                                        Selected file: <span className="font-medium">{uploadedFile.name}</span> ({Math.round(uploadedFile.size / 1024)} KB)
-                                    </p>
+                            {uploadedFiles.length > 0 && !isUploading && (
+                                <div className="mt-4 space-y-3">
+                                    {uploadedFiles.map((file) => (
+                                        <div
+                                            key={file.port}
+                                            className="p-3 bg-red-100 rounded-md flex justify-between items-center"
+                                        >
+                                            <p className="text-sm text-red-700">
+                                                {file.name} —{' '}
+                                                <span className="font-medium">Invite Code: {file.port}</span>
+                                            </p>
+                                            <button
+                                                className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                                onClick={() => handleStopSharing(file.port)}
+                                            >
+                                                Stop Sharing
+                                            </button>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
 
@@ -136,19 +150,6 @@ function App() {
                                 <div className="mt-6 text-center">
                                     <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-red-500 border-t-transparent"></div>
                                     <p className="mt-2 text-red-600">Uploading</p>
-                                </div>
-                            )}
-
-                            <InviteCode port={port} />
-
-                            {port && (
-                                <div className="mt-4 text-center">
-                                    <button
-                                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                                        onClick={handleStopSharing}
-                                    >
-                                        Stop Sharing
-                                    </button>
                                 </div>
                             )}
                         </div>
