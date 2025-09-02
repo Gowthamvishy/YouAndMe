@@ -24,15 +24,17 @@ function App() {
       const uploaded: UploadedFile[] = []; // ✅ explicitly typed
 
       for (const file of files) {
-        const formData = new FormData();
-        formData.append("file", file);
+    const formData = new FormData();
+-   formData.append("file", file);
++   formData.append("files", file); // must match backend param name
 
-        const response = await axios.post(`${backendUrl}/api/upload`, formData, {
-          headers: { "Content-Type": "multipart/form-data" },
-        });
+    const response = await axios.post(`${backendUrl}/api/upload`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+    });
 
-        uploaded.push({ name: file.name, port: response.data.port });
-      }
+    uploaded.push({ name: file.name, port: response.data.port });
+}
+
 
       setUploadedFiles((prev) => [...prev, ...uploaded]);
     } catch (error) {
