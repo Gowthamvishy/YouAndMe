@@ -7,10 +7,9 @@ import axios from 'axios';
 function App() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isUploading, setIsUploading] = useState(false);
-  const [isDownloading, setIsDownloading] = useState(false);
   const [port, setPort] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'upload' | 'download'>('upload');
-
+  
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleFileUpload = async (files: File[]) => {
@@ -48,7 +47,6 @@ function App() {
     }
   };
 
-  
   document.body.style.fontFamily = "'Inter', sans-serif";
 
   return (
@@ -116,13 +114,7 @@ function App() {
             </div>
           ) : (
             <div>
-             <FileDownload isDownloading={isDownloading} />
-              {isDownloading && (
-                <div className="mt-6 text-center">
-                  <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-red-500 border-t-transparent"></div>
-                  <p className="mt-2 text-red-600">Downloading...</p>
-                </div>
-              )}
+              <FileDownload isDownloading={false} />
             </div>
           )}
         </div>
