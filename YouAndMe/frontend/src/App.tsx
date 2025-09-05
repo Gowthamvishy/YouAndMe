@@ -48,32 +48,7 @@ function App() {
     }
   };
 
-  const handleDownload = async (portToDownload: number) => {
-    setIsDownloading(true);
-    try {
-      const response = await axios.get(`${backendUrl}/api/download/${portToDownload}`, {
-        responseType: 'blob',
-      });
-
-      const blob = new Blob([response.data], { type: 'application/zip' });
-      const url = window.URL.createObjectURL(blob);
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'shared-files.zip');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error downloading files:', error);
-      alert('Failed to download files. Please check the invite code and try again.');
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
+  
   document.body.style.fontFamily = "'Inter', sans-serif";
 
   return (
