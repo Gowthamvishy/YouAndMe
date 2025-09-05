@@ -24,7 +24,7 @@ export default function FileDownload({ isDownloading }: FileDownloadProps) {
     }
 
     try {
-      // Fetch zip from backend
+      // Fetch ZIP from backend
       const response = await axios.get(`${backendUrl}/api/download/${port}`, {
         responseType: "blob",
       });
@@ -32,26 +32,26 @@ export default function FileDownload({ isDownloading }: FileDownloadProps) {
       // Load ZIP
       const zip = await JSZip.loadAsync(response.data);
 
-      // Iterate over each file in the ZIP
+      // Extract and save each file individually
       const files = Object.values(zip.files); // JSZipObject[]
       for (const file of files) {
         if (!file.dir) {
           const content = await file.async("blob");
-          saveAs(content, file.name);
+          saveAs(content, file.name); // download each file
         }
       }
     } catch (err) {
       console.error("Download failed:", err);
-      setError("Failed to download file. Please check the invite code and try again.");
+      setError("Failed to download files. Please check the invite code and try again.");
     }
   };
 
   return (
     <div className="space-y-4">
       <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-        <h3 className="text-lg font-medium text-blue-800 mb-2">Receive a File</h3>
+        <h3 className="text-lg font-medium text-blue-800 mb-2">Receive Files</h3>
         <p className="text-sm text-blue-600">
-          Enter the invite code shared with you to download the files.
+          Enter the invite code shared with you to download all files individually.
         </p>
       </div>
 
@@ -75,7 +75,7 @@ export default function FileDownload({ isDownloading }: FileDownloadProps) {
 
         <button
           type="submit"
-          className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+          className="w-full flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
           disabled={isDownloading || !inviteCode}
         >
           {isDownloading ? <span>Downloading...</span> : <><FiDownload className="mr-2" /><span>Download Files</span></>}
