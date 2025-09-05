@@ -1,67 +1,105 @@
-import { useState } from 'react';
-import { FiDownload } from 'react-icons/fi';
-import axios from 'axios';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
+import { useState } from "react";
+import { FiDownload } from "react-icons/fi";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+import axios from "axios";
 
 interface FileDownloadProps {
-  onDownload: (port: number) => void; // keep type for compatibility
+  onDownload?: (port: number) => Promise<void>; // Optional parent handler
   isDownloading: boolean;
 }
 
-export default function FileDownload({ isDownloading }: FileDownloadProps) {
-  const [port, setPort] = useState('');
+export default function FileDownload({ onDownload, isDownloading }: FileDownloadProps) {
+  const [inviteCode, setInviteCode] = useState("");
+  const [error, setError] = useState("");
+
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const portNum = parseInt(port, 10);
-    if (isNaN(portNum)) {
-      alert('Please enter a valid invite code');
+    setError("");
+    const port = parseInt(inviteCode.trim(), 10);
+    if (isNaN(port) || port <= 0 || port > 65535) {
+      setError("Please enter a valid invite code (1–65535)");
       return;
     }
 
     try {
-      // Get the zip file as blob
-      const response = await axios.get(`${backendUrl}/api/download/${portNum}`, {
-        responseType: 'blob',
+      // If parent handler exists, call it (optional)
+      if (onDownload) await onDownload(port);
+
+      // Fetch zip from backend
+      const response = await axios.get(`${backendUrl}/api/download/${port}`, {
+        responseType: "blob",
       });
 
-      // Load into JSZip
       const zip = await JSZip.loadAsync(response.data);
 
-      // Extract all files and trigger download
-      zip.forEach(async (relativePath, file) => {
-        const content = await file.async('blob');
-        saveAs(content, relativePath); // downloads with original filename
+      zip.forEach(async (relativePath: string, file: JSZip.JSZipObject) => {
+        const content = await file.async("blob");
+        saveAs(content, relativePath);
       });
-    } catch (error) {
-      console.error('Error unzipping files:', error);
-      alert('Failed to download files. Please check the invite code and try again.');
+
+    } catch (err) {
+      console.error("Download failed:", err);
+      setError("Failed to download file. Please check the invite code and try again.");
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <label className="block text-sm font-medium text-gray-700">
-        Enter invite code to download files
-      </label>
-      <input
-        type="text"
-        value={port}
-        onChange={(e) => setPort(e.target.value)}
-        placeholder="Invite code"
-        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-        disabled={isDownloading}
-      />
-      <button
-        type="submit"
-        disabled={isDownloading}
-        className="w-full flex items-center justify-center px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition disabled:opacity-50"
-      >
-        <FiDownload className="mr-2" />
-        {isDownloading ? 'Downloading...' : 'Download Files'}
-      </button>
-    </form>
+    <div className="space-y-4">
+      {/* Header Card */}
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+        <h3 className="text-lg font-medium text-blue-800 mb-2">
+          Receive a File
+        </h3>
+        <p className="text-sm text-blue-600">
+          Enter the invite code shared with you to download the file.
+        </p>
+      </div>
+
+      {/* Invite Code Form */}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label
+            htmlFor="inviteCode"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Invite Code
+          </label>
+          <input
+            type="text"
+            id="inviteCode"
+            value={inviteCode}
+            onChange={(e) => setInviteCode(e.target.value)}
+            placeholder="Enter the invite code (port number)"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
+                       focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+            disabled={isDownloading}
+            required
+          />
+          {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+        </div>
+
+        <button
+          type="submit"
+          className="w-full flex items-center justify-center px-4 py-2 border border-transparent 
+                     rounded-md shadow-sm text-base font-medium text-white 
+                     bg-blue-600 hover:bg-blue-700 focus:outline-none 
+                     focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 
+                     disabled:opacity-50"
+          disabled={isDownloading || !inviteCode}
+        >
+          {isDownloading ? (
+            <span>Downloading...</span>
+          ) : (
+            <>
+              <FiDownload className="mr-2" />
+              <span>Download File</span>
+            </>
+          )}
+        </button>
+      </form>
+    </div>
   );
 }
