@@ -3,7 +3,7 @@ import { useDropzone } from 'react-dropzone';
 import { FiUpload } from 'react-icons/fi';
 
 interface FileUploadProps {
-  onFileUpload: (file: File) => void;
+  onFileUpload: (files: File[]) => void;
   isUploading: boolean;
 }
 
@@ -13,7 +13,7 @@ export default function FileUpload({ onFileUpload, isUploading }: FileUploadProp
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       if (acceptedFiles.length > 0) {
-        onFileUpload(acceptedFiles[0]);
+        onFileUpload(acceptedFiles);
       }
     },
     [onFileUpload]
@@ -21,7 +21,7 @@ export default function FileUpload({ onFileUpload, isUploading }: FileUploadProp
 
   const { getRootProps, getInputProps } = useDropzone({
     onDrop,
-    multiple: false,
+    multiple: true,
     onDragEnter: () => setDragActive(true),
     onDragLeave: () => setDragActive(false),
     onDropAccepted: () => setDragActive(false),
@@ -41,12 +41,8 @@ export default function FileUpload({ onFileUpload, isUploading }: FileUploadProp
         <div className="p-3 bg-blue-100 rounded-full">
           <FiUpload className="w-6 h-6 text-blue-500" />
         </div>
-        <p className="text-lg font-medium text-gray-700">
-          Drag & drop a file here, or click to select
-        </p>
-        <p className="text-sm text-gray-500">
-          Share any file with your peers securely
-        </p>
+        <p className="text-lg font-medium text-gray-700">Drag & drop files here, or click to select</p>
+        <p className="text-sm text-gray-500">Share multiple files with your peers securely</p>
       </div>
     </div>
   );
