@@ -141,7 +141,7 @@ function App() {
             </div>
           ) : (
             <div>
-              <FileDownload onDownload={handleDownload} isDownloading={isDownloading} />
+             <FileDownload isDownloading={isDownloading} />
               {isDownloading && (
                 <div className="mt-6 text-center">
                   <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-red-500 border-t-transparent"></div>
