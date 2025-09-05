@@ -1,21 +1,43 @@
 import { useState } from 'react';
 import { FiDownload } from 'react-icons/fi';
+import axios from 'axios';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
 
 interface FileDownloadProps {
-  onDownload: (port: number) => void;
+  onDownload: (port: number) => void; // keep type for compatibility
   isDownloading: boolean;
 }
 
-export default function FileDownload({ onDownload, isDownloading }: FileDownloadProps) {
+export default function FileDownload({ isDownloading }: FileDownloadProps) {
   const [port, setPort] = useState('');
+  const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const portNum = parseInt(port, 10);
-    if (!isNaN(portNum)) {
-      onDownload(portNum);
-    } else {
+    if (isNaN(portNum)) {
       alert('Please enter a valid invite code');
+      return;
+    }
+
+    try {
+      // Get the zip file as blob
+      const response = await axios.get(`${backendUrl}/api/download/${portNum}`, {
+        responseType: 'blob',
+      });
+
+      // Load into JSZip
+      const zip = await JSZip.loadAsync(response.data);
+
+      // Extract all files and trigger download
+      zip.forEach(async (relativePath, file) => {
+        const content = await file.async('blob');
+        saveAs(content, relativePath); // downloads with original filename
+      });
+    } catch (error) {
+      console.error('Error unzipping files:', error);
+      alert('Failed to download files. Please check the invite code and try again.');
     }
   };
 
